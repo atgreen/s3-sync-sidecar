@@ -1,0 +1,82 @@
+kind: Template
+apiVersion: v1
+metadata:
+  annotations:
+    description: s3-sync-sidecar demo
+  name: s3-sync-demo
+objects:
+- kind: Service
+  apiVersion: v1
+  metadata:
+    annotations:
+      description: Expose web server
+    name: s3-sync-demo-web-server
+  spec:
+    ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+    selector:
+      name: s3-sync-demo-web-server
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    annotations:
+      description: demo
+    name: s3-sync-demo
+    labels:
+      app: s3-sync-demo
+  spec:
+    replicas: 1
+    selector:
+      name: s3-sync-demo
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          name: s3-sync-demo
+        name: s3-sync-demo
+      spec:
+        containers:
+        - env:
+          - name: S3REMOTEOUTBOX
+            value: ${S3REMOTEOUTBOX}
+          - name: LOCALINBOX
+            value: /var/www/html
+          - name: AWS_ACCESS_KEY_ID
+            value: yourkeyhere
+          - name: AWS_SECRET_ACCESS_KEY
+            value: yoursecrethere
+          image: atgreen/s3-sync-sidecar
+          name: s3-sync-sidecar
+          volumeMounts:
+          - mountPath: /var/www/html
+            name: html-data
+        - image: atgreen/s3-sync-httpd
+          name: httpd
+          ports:
+          - containerPort: 80
+          volumeMounts:
+          - mountPath: /var/www/html
+            name: html-data
+        volumes:
+        - name: html-data
+          persistentVolumeClaim:
+            claimName: html-data
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: html-data
+    labels:
+      app: s3-sync-data
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1G
+parameters:
+- description: Your great S3 outbox
+  name: S3REMOTEOUTBOX
+  required: true
