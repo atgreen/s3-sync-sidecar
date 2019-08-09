@@ -1,8 +1,10 @@
 #!/bin/sh
 
+set -x
+
 while true; do
-    [ ! -v "${S3REMOTEOUTBOX}" ] && [ ! -v "${LOCALINBOX}" ] || aws s3 sync --delete ${S3REMOTEOUTBOX} ${LOCALINBOX} ;
-    [ ! -v "${S3REMOTEINBOX}" ] && [ ! -v "${LOCALOUTBOX}" ] || aws s3 sync --delete ${LOCALOUTBOX} ${S3REMOTEINBOX} ;
+    [ "x${S3REMOTEOUTBOX}" != "x" ] && [ "x${LOCALINBOX}" != "x" ] && aws s3 sync --delete ${S3REMOTEOUTBOX} ${LOCALINBOX} ;
+    [ "x${S3REMOTEINBOX}" != "x" ] && [ "x${LOCALOUTBOX}" != "x" ] && aws s3 sync --delete ${LOCALOUTBOX} ${S3REMOTEINBOX} ;
     sleep 5 ;
 done
 
